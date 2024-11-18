@@ -14,9 +14,10 @@ static link_t *connections;
 /* Daemon structures
  */
 struct resbd *res;
-struct params *prms;;
+struct params *prms;
 link_t *queues;
 
+static int init_main_data(void);
 static void manage_resources(void);
 static int handle_events(int, struct epoll_event *);
 static void handle_connection(int);
@@ -52,10 +53,10 @@ main(int argc, char **argv)
 	}
     }
 
+    init_main_data();
     /* Read the configuration and buiild the basic data structure
      */
     read_config(cfile);
-    connections = link_make();
 
     /* Initialize the network layer
      */
@@ -74,6 +75,19 @@ main(int argc, char **argv)
 	manage_resources();
     }
 
+    return 0;
+}
+
+static int
+init_main_data(void)
+{
+    connections = link_make();
+    res = calloc(1, sizeof(struct resbd));
+    res->epoll_timer = 60; /* ms */
+
+    prms = calloc(1, sizeof(struct params));
+
+    queues = link_make();
     return 0;
 }
 

@@ -137,6 +137,22 @@ link_deque(link_t *head)
     return t;
 }
 
+void *
+link_find(link_t *head, void *el)
+{
+    link_t *p;
+
+    for (p = head->next;
+	 p != NULL;
+	 p = p->next) {
+	if (p->ptr == el) {
+	    return p->ptr;
+	}
+    }
+
+    return NULL;
+}
+
 /* Remove the element val from the link.
  */
 void *

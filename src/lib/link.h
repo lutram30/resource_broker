@@ -32,5 +32,6 @@ extern int link_push(link_t *, void *);
 extern int link_enque(link_t *, void *);
 extern void *link_deque(link_t *);
 extern void *link_pop(link_t *);
+extern void *link_find(link_t *, void *);
 
 #endif /* __LINK__ */

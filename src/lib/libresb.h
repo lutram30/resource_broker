@@ -22,9 +22,14 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "nio.h"
+#include "my_syslog.h"
 #include "link.h"
 #include "ini.h"
+
+#define ERR (strerror(errno))
+/* Max epoll events
+ */
+#define MAX_EVENTS 1024
 
 typedef enum {
     BROKER_STATUS,
@@ -33,17 +38,30 @@ typedef enum {
 
 typedef enum {
     BROKER_OK,
-    BROKE_ERERROR
+    BROKER_ERROR
 } reply_t;
 
-struct op_request {
-    request_t req;
+struct rb_request {
+    request_t op;
     char *buf_request;
+    int len;
 };
 
-struct op_reply {
-    reply_t rep;
-    char *reply_buf;
+struct rb_reply {
+    reply_t op_status;
+    char *buf_reply;
+    int len;
 };
+
+struct rb_server {
+    char name[MAX_NAME_LEN];
+    char *ip;
+    int port;
+};
+
+extern int get_server_data(struct rb_server *);
+extern int nio_client_rw(struct rb_server *,
+			 struct rb_request *,
+			 struct rb_reply *);
 
 #endif

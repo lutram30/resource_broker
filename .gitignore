@@ -21,3 +21,6 @@ config.sub
 compile
 cscope.files
 cscope.out
+src/cmd/rbstatus
+src/daemons/resbd
+src/daemons/resbs
