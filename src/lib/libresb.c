@@ -12,3 +12,9 @@ get_server_data(struct rb_server *r)
 
     return 0;
 }
+
+struct rb_status *
+rb_broker_status(void)
+{
+    return NULL;
+}

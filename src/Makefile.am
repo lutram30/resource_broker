@@ -1,5 +1,4 @@
 
-AM_CPPFLAGS = -ggdb  -Werror
 
 include_HEADERS = resb.h
 

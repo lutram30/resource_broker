@@ -9,13 +9,14 @@
  * timer
  */
 static struct epoll_event events[MAX_EVENTS];
-static link_t *connections;
+static struct epoll_event ev;
 
 /* Daemon structures
  */
 struct resbd *res;
 struct params *prms;
 link_t *queues;
+time_t my_uptime;
 
 static int init_main_data(void);
 static void manage_resources(void);
@@ -64,7 +65,7 @@ main(int argc, char **argv)
 
     while (1) {
 	int nready;
-	int ms = 5;
+	int ms = -1;
 
 	nready = nio_epoll(events, ms);
 	if (nready < 0) {
@@ -81,13 +82,15 @@ main(int argc, char **argv)
 static int
 init_main_data(void)
 {
-    connections = link_make();
     res = calloc(1, sizeof(struct resbd));
-    res->epoll_timer = 60; /* ms */
+    res->epoll_timer = -1; /* ms */
 
     prms = calloc(1, sizeof(struct params));
 
     queues = link_make();
+
+    time(&my_uptime);
+
     return 0;
 }
 
@@ -97,7 +100,6 @@ handle_events(int nready, struct epoll_event *e)
     int cc;
 
     for (cc = 0; cc < nready; cc++) {
-	struct net_io *io;
 	socklen_t addrlen;
 	struct sockaddr_in addr;
 	struct s;
@@ -114,14 +116,10 @@ handle_events(int nready, struct epoll_event *e)
 	     */
 	    nio_block(as);
 
-	    struct epoll_event *ev;
-	    ev = calloc(1, sizeof(struct epoll_event));
-	    ev->events = EPOLLIN | EPOLLET;
-	    ev->data.fd = as;
+	    ev.events = EPOLLIN;
+	    ev.data.fd = as;
 
-	    nio_epoll_add(as, ev);
-
-	    link_push(connections, ev);
+	    nio_epoll_add(as, &ev);
 	    continue;
 	}
 	handle_connection(events[cc].data.fd);
@@ -131,8 +129,29 @@ handle_events(int nready, struct epoll_event *e)
 }
 
 static void
-handle_connection(int fd)
+handle_connection(int s)
 {
+    struct rb_header hdr;
+    ssize_t cc;
+
+    nio_epoll_del(s);
+
+    cc = nio_readblock(s, &hdr, sizeof(struct rb_header));
+    if (cc < 0) {
+    }
+
+    switch (hdr.opcode) {
+    case BROKER_STATUS:
+	handle_broker_status(s, &hdr);
+	break;
+    default:
+	break;
+    }
+
+    close(s);
+
+    return;
+
 }
 
 static void

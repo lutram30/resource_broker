@@ -15,7 +15,6 @@ int
 nio_server_init(int port)
 {
     struct sockaddr_in addr;
-    int sock;
     int cc;
     int opt;
     int s;
@@ -54,11 +53,10 @@ nio_server_init(int port)
      */
     struct epoll_event ev;
     ev.events = EPOLLIN;
-    ev.data.u64 = s;
+    ev.data.fd = s;
 
     cc = epoll_ctl(efd, EPOLL_CTL_ADD, s, &ev);
     if (cc < 0) {
-	syslog_(LOG_ERR, "%s: epoll_ctl(%d) failed %s", __func__, s, ERR);
 	close(s);
 	return -1;
     }
@@ -102,7 +100,20 @@ nio_epoll_add(int s, struct epoll_event *ev)
 {
 
     if (epoll_ctl(efd, EPOLL_CTL_ADD, s, ev) == -1) {
+	return -1;
     }
+
+    return 0;
+}
+
+int
+nio_epoll_del(int s)
+{
+    if (epoll_ctl(efd, EPOLL_CTL_DEL, s, NULL) < 0) {
+	return  -1;
+    }
+
+    return 0;
 }
 
 void
@@ -118,10 +129,13 @@ nio_block(int s)
 }
 
 int
-nio_client_rw(struct rb_server *r, struct rb_request *req, struct rb_reply *rep)
+nio_client_rw(struct rb_server *r,
+	      struct rb_message *req,
+	      struct rb_message *rep)
 {
     int s;
     int cc;
+    struct rb_header *hdr;
 
     s = nio_client_connect(r->port, r->ip);
     if (s < 0) {
@@ -129,16 +143,37 @@ nio_client_rw(struct rb_server *r, struct rb_request *req, struct rb_reply *rep)
 	return -1;
     }
 
-    cc = nio_writeblock(s, req->buf_request, req->len);
-    if (s < 0) {
+    /* Write to client
+     */
+    cc = nio_writeblock(s, req->header, sizeof(struct rb_header));
+    if (cc < 0) {
 	close(s);
 	return -1;
     }
 
-    cc = nio_readblock(s, rep->buf_reply, rep->len);
-    if (s < 0) {
-	close(s);
-	return -1;
+    if (req->header->len > 0) {
+	cc = nio_writeblock(s, req->msg_buf, req->header->len);
+	if (cc < 0) {
+	    close(s);
+	    return -1;
+	}
+    }
+
+    /* Read from client
+     */
+    hdr = calloc(1, sizeof(struct rb_header));
+    cc = nio_readblock(s, hdr, sizeof(struct rb_header));
+    if (cc < 0) {
+    }
+
+    rep->header = hdr;
+
+    if (hdr->len == 0)
+	return 0;
+
+    rep->msg_buf = calloc(1, hdr->len);
+    cc = nio_readblock(s, rep->msg_buf, hdr->len);
+    if (cc < 0) {
     }
 
     return 0;
@@ -150,7 +185,7 @@ nio_client_connect(int server_port, const char *server_addr)
     int s;
     int cc;
     int opt;
-    struct sockaddr_in   a;
+    struct sockaddr_in a;
 
     s = socket(AF_INET, SOCK_STREAM, 0);
     if (s < 0)
@@ -167,11 +202,12 @@ nio_client_connect(int server_port, const char *server_addr)
     a.sin_port = htons(server_port);
     a.sin_addr.s_addr = inet_addr(server_addr);
 
-   cc = connect(s, (struct sockaddr *)&server_addr, sizeof(server_addr));
-   if (cc < 0) {
-       close(s);
-       return -1;
-   }
+    socklen_t addrlen = sizeof(struct sockaddr_in);
+    cc = connect(s, (struct sockaddr *)&a, addrlen);
+    if (cc < 0) {
+	close(s);
+	return -1;
+    }
 
     return s;
 }
@@ -184,10 +220,10 @@ nio_client_connect(int server_port, const char *server_addr)
  * but in no other case.
  */
 int
-nio_readblock(int s, char *buf, int L)
+nio_readblock(int s, void *buf, size_t L)
 {
-    int   c;
-    int   L2;
+    int c;
+    size_t L2;
 
     errno = 0;
 
@@ -210,10 +246,10 @@ nio_readblock(int s, char *buf, int L)
 /* write a socket in blocking mode
  */
 int
-nio_writeblock(int s, char *buf, int L)
+nio_writeblock(int s, const void *buf, size_t L)
 {
-    int   c;
-    int   L2;
+    int c;
+    size_t L2;
 
     /* Make sure the socket is blocked
      */

@@ -16,6 +16,7 @@ struct resbd {
     int epoll_timer; /* milliseconds */
 };
 extern struct resbd *res;
+extern time_t my_uptime;
 
 struct params {
     char scheduler_type[MAX_NAME_LEN];
@@ -64,3 +65,4 @@ extern struct queue *rqueue;
 extern link_t *queues;
 
 extern int read_config(const char *);
+extern int handle_broker_status(int, struct rb_header *);

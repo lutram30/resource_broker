@@ -7,7 +7,7 @@
 
 static int init_resbd(const char *, const char *);
 static int init_params(const char *, const char *);
-static int init_queue(const char *, const char *);
+static int init_queue(const char *, const char *, const char *);
 static int handler(void *, const char *, const char *, const char *);
 static struct queue *get_queue_by_name(const char *);
 static int parse_machines(struct queue *, const char *);
@@ -39,7 +39,9 @@ static int handler(void *user,
     }
 
     if (strstr(section, "queue")) {
-        return init_queue(key, value);
+	char qname[MAX_NAME_LEN];
+	sscanf(section, "%*s%s", qname);
+        return init_queue(qname, key, value);
     }
 
     return 1;
@@ -65,22 +67,25 @@ init_params(const char *key, const char *val)
 {
     if (strcmp(key, "scheduler") == 0) {
         strcpy(prms->scheduler_type, val);
-        return 0;
+        return 1;
     }
     if (strcmp(key, "workload_timer") == 0) {
         prms->workload_timer = atoi(val);
         return 1;
     }
 
-    return 0;
+    /* We do not process all entries of params yet so
+     * do return an error
+     */
+    return 1;
 }
 
 static int
-init_queue(const char *key, const char *val)
+init_queue(const char *qname, const char *key, const char *val)
 {
     struct queue *q;
 
-    q = get_queue_by_name(key);
+    q = get_queue_by_name(qname);
 
     if (strcmp(key, "type") == 0) {
         if (strcmp(val, "vm") == 0)
@@ -97,7 +102,7 @@ init_queue(const char *key, const char *val)
     if (strcmp(key, "machines") == 0) {
         parse_machines(q, val);
     }
-    return 0;
+    return 1;
 }
 
 static struct queue *
@@ -119,6 +124,7 @@ get_queue_by_name(const char *name)
     strcpy(q->name, name);
     q->machines = link_make();
     q->status = QUEUE_STAT_IDLE;
+    link_enque(queues, q);
 
     return q;
 }

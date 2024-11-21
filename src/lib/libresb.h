@@ -22,7 +22,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "my_syslog.h"
 #include "link.h"
 #include "ini.h"
 
@@ -31,26 +30,24 @@
  */
 #define MAX_EVENTS 1024
 
-typedef enum {
+enum {
     BROKER_STATUS,
     BROKER_QUEUE_STATUS
-} request_t;
-
-typedef enum {
-    BROKER_OK,
-    BROKER_ERROR
-} reply_t;
-
-struct rb_request {
-    request_t op;
-    char *buf_request;
-    int len;
 };
 
-struct rb_reply {
-    reply_t op_status;
-    char *buf_reply;
-    int len;
+enum {
+    BROKER_OK,
+    BROKER_ERROR
+};
+
+struct rb_header {
+    int opcode;
+    size_t len;
+};
+
+struct rb_message {
+    struct rb_header *header;
+    char *msg_buf;
 };
 
 struct rb_server {
@@ -61,7 +58,7 @@ struct rb_server {
 
 extern int get_server_data(struct rb_server *);
 extern int nio_client_rw(struct rb_server *,
-			 struct rb_request *,
-			 struct rb_reply *);
+			 struct rb_message *,
+			 struct rb_message *);
 
 #endif

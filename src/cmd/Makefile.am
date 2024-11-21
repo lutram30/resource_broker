@@ -1,6 +1,6 @@
 #
 
-AM_CPPFLAGS = -DSYSCONFDIR=\"${sysconfdir}\"
+include $(top_srcdir)/common.mk
 AM_CPPFLAGS += -I..
 
 bin_PROGRAMS = rbstatus
