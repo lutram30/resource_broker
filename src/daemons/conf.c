@@ -30,11 +30,11 @@ static int handler(void *user,
 {
     printf("section: %s key: %s value: %s\n", section, key, value);
 
-    if (strcmp(section, "resbd") == 0) {
+    if (strcasecmp(section, "resbd") == 0) {
         return init_resbd(key, value);
     }
 
-    if (strcmp(section, "params") == 0) {
+    if (strcasecmp(section, "params") == 0) {
         return init_params(key, value);
     }
 
@@ -50,11 +50,11 @@ static int handler(void *user,
 static int
 init_resbd(const char *key, const char *val)
 {
-    if (strcmp(key, "host") == 0) {
-        strcpy(res->host, val);
+    if (strcasecmp(key, "host") == 0) {
+        res->host = strdup(val);
         return 1;
     }
-    if (strcmp(key, "port") == 0) {
+    if (strcasecmp(key, "port") == 0) {
         res->port = atoi(val);
         return 1;
     }
@@ -65,18 +65,24 @@ init_resbd(const char *key, const char *val)
 static int
 init_params(const char *key, const char *val)
 {
-    if (strcmp(key, "scheduler") == 0) {
-        strcpy(prms->scheduler_type, val);
-        return 1;
-    }
-    if (strcmp(key, "workload_timer") == 0) {
-        prms->workload_timer = atoi(val);
-        return 1;
+    if (strcasecmp(key, "scheduler") == 0) {
+        params->scheduler = strdup(val);
+    } else if (strcasecmp(key, "work_dir") == 0) {
+	params->work_dir = strdup(val);
+    } else  if (strcasecmp(key, "container_runtime") == 0) {
+	params->container_runtime = strdup(val);
+    } else if (strcasecmp(key, "vm_runtime") == 0) {
+	params->vm_runtime = strdup(val);
+    } else if (strcasecmp(key, "workload_timer") == 0) {
+        params->workload_timer = atoi(val);
+    } if (strcasecmp(key, "log_mask") == 0) {
+	int i;
+	char *C = strdup(val);
+	for (i = 0; val[i]; i++)
+	    C[i] = toupper(val[i]);
+	params->log_mask = strdup(C);
     }
 
-    /* We do not process all entries of params yet so
-     * do return an error
-     */
     return 1;
 }
 
@@ -87,19 +93,19 @@ init_queue(const char *qname, const char *key, const char *val)
 
     q = get_queue_by_name(qname);
 
-    if (strcmp(key, "type") == 0) {
-        if (strcmp(val, "vm") == 0)
+    if (strcasecmp(key, "type") == 0) {
+        if (strcasecmp(val, "vm") == 0)
             q->type = MACHINE_VMS;
         else
             q->type = MACHINE_CONTAINERS;
     }
-    if (strcmp(key, "name_space") == 0) {
-        strcpy(q->name_space, val);
+    if (strcasecmp(key, "name_space") == 0) {
+        q->name_space = strdup(val);
     }
-    if (strcmp(key, "borrow_factor") == 0) {
+    if (strcasecmp(key, "borrow_factor") == 0) {
         sscanf(val, "%d%d", &q->borrow_factor[0], &q->borrow_factor[1]);
     }
-    if (strcmp(key, "machines") == 0) {
+    if (strcasecmp(key, "machines") == 0) {
         parse_machines(q, val);
     }
     return 1;
@@ -113,7 +119,7 @@ get_queue_by_name(const char *name)
 
     for (l = queues->next; l != NULL; l = l->next) {
         q = (struct queue *)l->ptr;
-        if (strcmp(name, q->name) == 0) {
+        if (strcasecmp(name, q->name) == 0) {
             return q;
         }
     }
@@ -121,7 +127,7 @@ get_queue_by_name(const char *name)
     /* new queue
      */
     q = calloc(1, sizeof(struct queue));
-    strcpy(q->name, name);
+    q->name = strdup(name);
     q->machines = link_make();
     q->status = QUEUE_STAT_IDLE;
     link_enque(queues, q);
@@ -144,7 +150,7 @@ parse_machines(struct queue *q, const char *machines)
         struct machine *m;
 
         m = calloc(1, sizeof(struct machine));
-        strcpy(m->name, token);
+        m->name = strdup(token);
         m->status = MACHINE_IDLE;
         link_enque(q->machines, m);
 

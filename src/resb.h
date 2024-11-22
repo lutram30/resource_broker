@@ -22,6 +22,8 @@ struct rb_status {
     pid_t pid;
     double load[3];
 };
+
 extern struct rb_status *rb_broker_status(void);
+extern char *rb_broker_params(void);
 
 #endif

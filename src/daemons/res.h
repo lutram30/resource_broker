@@ -10,7 +10,7 @@
 /* Resource Broker Daemon
  */
 struct resbd {
-    char host[MAX_NAME_LEN];
+    char *host;
     int port;
     int sock;
     int epoll_timer; /* milliseconds */
@@ -18,15 +18,16 @@ struct resbd {
 extern struct resbd *res;
 extern time_t my_uptime;
 
-struct params {
-    char scheduler_type[MAX_NAME_LEN];
-    char conf_dir[PATH_MAX];
-    char work_dir[PATH_MAX];
-    char container_runtime[MAX_NAME_LEN];
-    char vm_runtime[MAX_NAME_LEN];
+struct parameters {
+    char *scheduler;
+    char *work_dir;
+    char *container_runtime;
+    char *vm_runtime;
     int workload_timer;
+    char *log_mask;
 };
-extern struct params *prms;
+
+extern struct parameters *params;
 
 typedef enum {
     MACHINE_VMS,
@@ -39,7 +40,7 @@ typedef enum {
 } mach_stat_t;
 
 struct machine {
-    char name[MAX_NAME_LEN];
+    char *name;
     int type;
     mach_stat_t status;
 };
@@ -52,10 +53,10 @@ typedef enum {
 } queue_stat_t;
 
 struct queue {
-    char name[MAX_NAME_LEN];
+    char *name;
     queue_stat_t status;
     mach_t type;
-    char name_space[MAX_NAME_LEN];
+    char *name_space;
     link_t *machines;
     /* Every borrow_factor[0] add borrow_factor[1] hosts/containers
      */
@@ -65,4 +66,6 @@ extern struct queue *rqueue;
 extern link_t *queues;
 
 extern int read_config(const char *);
-extern int handle_broker_status(int, struct rb_header *);
+extern int status_info(int, struct rb_header *);
+extern int params_info(int, struct rb_header *);
+extern int queue_info(int, struct rb_header *);

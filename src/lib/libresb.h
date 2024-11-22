@@ -14,6 +14,8 @@
 #include <stdarg.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <syslog.h>
+#include <ctype.h>
 #include <linux/limits.h>
 #include <sys/time.h>
 #include <sys/stat.h>
@@ -32,7 +34,8 @@
 
 enum {
     BROKER_STATUS,
-    BROKER_QUEUE_STATUS
+    BROKER_QUEUE_STATUS,
+    BROKER_PARAMS
 };
 
 enum {
@@ -60,5 +63,6 @@ extern int get_server_data(struct rb_server *);
 extern int nio_client_rw(struct rb_server *,
 			 struct rb_message *,
 			 struct rb_message *);
+extern char *remote_addr(int);
 
 #endif
