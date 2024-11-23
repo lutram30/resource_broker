@@ -10,7 +10,6 @@ static int init_params(const char *, const char *);
 static int init_queue(const char *, const char *, const char *);
 static int handler(void *, const char *, const char *, const char *);
 static struct queue *get_queue_by_name(const char *);
-static int parse_machines(struct queue *, const char *);
 
 int
 read_config(const char *file)
@@ -28,8 +27,6 @@ static int handler(void *user,
                    const char *key,
                    const char *value)
 {
-    printf("section: %s key: %s value: %s\n", section, key, value);
-
     if (strcasecmp(section, "resbd") == 0) {
         return init_resbd(key, value);
     }
@@ -105,8 +102,18 @@ init_queue(const char *qname, const char *key, const char *val)
     if (strcasecmp(key, "borrow_factor") == 0) {
         sscanf(val, "%d%d", &q->borrow_factor[0], &q->borrow_factor[1]);
     }
-    if (strcasecmp(key, "machines") == 0) {
-        parse_machines(q, val);
+    if (strcasecmp(key, "type") == 0) {
+	if (strcasecmp(val, "vm") == 0) {
+	    q->type = MACHINE_VMS;
+	} else if (strcasecmp(val, "container") == 0) {
+	    q->type = MACHINE_CONTAINERS;
+	} else if (strcasecmp(val, "cloud") == 0) {
+	    q->type = MACHINE_CLOUD;
+	} else {
+	    /* Default is VM
+	     */
+	    q->type = MACHINE_VMS;
+	}
     }
     return 1;
 }
@@ -133,30 +140,4 @@ get_queue_by_name(const char *name)
     link_enque(queues, q);
 
     return q;
-}
-
-static int
-parse_machines(struct queue *q, const char *machines)
-{
-    char *token;
-    char *s;
-    char *str;
-    char *str0;
-
-    str0 = str = strdup(machines);
-
-    token = strtok_r(str, ", ", &s);
-    while (token) {
-        struct machine *m;
-
-        m = calloc(1, sizeof(struct machine));
-        m->name = strdup(token);
-        m->status = MACHINE_IDLE;
-        link_enque(q->machines, m);
-
-        token = strtok_r(NULL, ", ", &s);
-    }
-    free(str0);
-
-    return 1;
 }

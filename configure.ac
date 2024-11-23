@@ -9,7 +9,8 @@ AC_PROG_RANLIB
 
 AC_CONFIG_FILES([ Makefile \
 	src/Makefile \
-	src/daemons/Makefile \
+	src/daemon/Makefile \
+	src/server/Makefile \
 	src/lib/Makefile \
 	src/cmd/Makefile \
 ])

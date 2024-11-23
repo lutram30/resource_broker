@@ -164,6 +164,8 @@ nio_client_rw(struct rb_server *r,
     hdr = calloc(1, sizeof(struct rb_header));
     cc = nio_readblock(s, hdr, sizeof(struct rb_header));
     if (cc < 0) {
+	close(s);
+	return -1;
     }
 
     rep->header = hdr;
@@ -174,6 +176,8 @@ nio_client_rw(struct rb_server *r,
     rep->msg_buf = calloc(1, hdr->len);
     cc = nio_readblock(s, rep->msg_buf, hdr->len);
     if (cc < 0) {
+	close(s);
+	return -1;
     }
 
     return 0;
@@ -263,7 +267,7 @@ nio_writeblock(int s, const void *buf, size_t L)
             L2 -= c;
             buf += c;
         } else if (c < 0 && errno != EINTR) {
-            return (-1);
+            return -1;
         }
     }
 

@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <syslog.h>
 #include <ctype.h>
+#include <netdb.h>
 #include <linux/limits.h>
 #include <sys/time.h>
 #include <sys/stat.h>
@@ -64,5 +65,6 @@ extern int nio_client_rw(struct rb_server *,
 			 struct rb_message *,
 			 struct rb_message *);
 extern char *remote_addr(int);
+extern char *resolve_name(const char *);
 
 #endif

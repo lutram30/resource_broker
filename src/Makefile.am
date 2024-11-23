@@ -2,4 +2,4 @@
 
 include_HEADERS = resb.h
 
-SUBDIRS = lib daemons cmd
+SUBDIRS = lib daemon server cmd

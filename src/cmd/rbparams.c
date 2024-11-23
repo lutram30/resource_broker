@@ -26,16 +26,22 @@ main(int argc, char **argv)
 
     cc = nio_client_rw(&r, &req, &rep);
     if (cc < 0) {
+	fprintf(stderr, "Network I/O error with the broker\n");
 	free(hdr);
 	return -1;
     }
 
     hdr2 = rep.header;
     if (hdr2->opcode != BROKER_OK) {
+	fprintf(stderr, "Broker returned error\n");
+	free(hdr);
 	return -1;
     }
 
-    printf("%s", rep.msg_buf);
+    printf("%s\n", rep.msg_buf);
+
+    free(hdr);
+    free(rep.header);
 
     return 0;
 }

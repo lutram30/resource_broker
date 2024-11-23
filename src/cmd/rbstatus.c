@@ -42,8 +42,8 @@ main(int argc, char **argv)
 	   &s.load[0], &s.load[1], &s.load[2]);
 
     char *t = ctime(&s.uptime);
-    printf("\
-broker status: ok, up since: %.19s, pid: %d, load average: %lf, %lf, %lf\n",
+    printf("broker status: ok\n");
+    printf("  up since: %.19s, pid: %d, load average: %lf, %lf, %lf\n",
 	   t, s.pid, s.load[0], s.load[1], s.load[2]);
 
     return 0;

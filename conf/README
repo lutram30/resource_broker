@@ -1,0 +1,9 @@
+#
+Example of configuration file for the resbd daemon is resbd.conf.
+The machinelist is a file that lists either vms or containers
+used by the rbserver client that starts/stops the vm or containers.
+If the rbserver runs in cloud mode the instances are returned by
+the cloud so no machine list is needed.
+
+Install manually the resbd.conf file to /usr/local/etc or where
+the installation etc is.

@@ -31,25 +31,18 @@ extern struct parameters *params;
 
 typedef enum {
     MACHINE_VMS,
-    MACHINE_CONTAINERS
+    MACHINE_CONTAINERS,
+    MACHINE_CLOUD
 } mach_t;
-
-typedef enum {
-    MACHINE_BORROWED,
-    MACHINE_IDLE
-} mach_stat_t;
 
 struct machine {
     char *name;
     int type;
-    mach_stat_t status;
 };
 
 typedef enum {
     QUEUE_STAT_IDLE,
     QUEUE_STAT_BORROWING,
-    QUEUE_STAT_BORROW,
-    QUEUE_STAT_RETURNING
 } queue_stat_t;
 
 struct queue {

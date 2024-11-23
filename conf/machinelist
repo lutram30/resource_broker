@@ -1,0 +1,7 @@
+# Typically a rbserver serves only one type of machines, vm, containers
+# or cloud
+# vm
+machines = rocky9 centos7 blaze
+
+#
+machines = cnt1 cnt2
