@@ -24,3 +24,7 @@ cscope.out
 src/cmd/rbstatus
 src/daemons/resbd
 src/daemons/resbs
+src/cmd/rbparams
+src/daemon/resbd
+src/daemon/resbs
+src/server/rbserver

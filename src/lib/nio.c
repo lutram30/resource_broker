@@ -129,7 +129,7 @@ nio_block(int s)
 }
 
 int
-nio_client_rw(struct rb_server *r,
+nio_client_rw(struct rb_daemon_id *r,
 	      struct rb_message *req,
 	      struct rb_message *rep)
 {
@@ -165,6 +165,7 @@ nio_client_rw(struct rb_server *r,
     cc = nio_readblock(s, hdr, sizeof(struct rb_header));
     if (cc < 0) {
 	close(s);
+	free(hdr);
 	return -1;
     }
 
@@ -177,6 +178,8 @@ nio_client_rw(struct rb_server *r,
     cc = nio_readblock(s, rep->msg_buf, hdr->len);
     if (cc < 0) {
 	close(s);
+	free(hdr);
+	free(rep->msg_buf);
 	return -1;
     }
 

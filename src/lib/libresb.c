@@ -3,20 +3,100 @@
 
 #include "libresb.h"
 
-int
-get_server_data(struct rb_server *r)
+/* Parse ip@port
+ */
+struct rb_daemon_id *
+get_daemon_id(char *s)
 {
-    r->port = 41200;
-    r->ip = "127.0.0.1";
-    strcpy(r->name, "buntu24");
+    char *p;
+    struct rb_daemon_id *d;
 
-    return 0;
+    d = calloc(1, sizeof(struct rb_daemon_id));
+
+    p = strchr(s, '@');
+    p = 0;
+    d->ip = strdup(s);
+    ++p;
+    d->port = atoi(s);
+
+    return d;
+}
+
+void
+free_daemon_id(struct rb_daemon_id *d)
+{
+    free(d->ip);
+    free(d);
 }
 
 struct rb_status *
-rb_broker_status(void)
+rb_broker_status(struct rb_daemon_id *r)
 {
-    return NULL;
+    struct rb_message req;
+    struct rb_message rep;
+    struct rb_header *hdr;
+    struct rb_header *hdr2;
+    int cc;
+    struct rb_status *s;
+
+    hdr = calloc(1, sizeof(struct rb_header));
+    hdr->opcode = BROKER_STATUS;
+    hdr->len = 0;
+    req.header = hdr;
+
+    cc = nio_client_rw(r, &req, &rep);
+    if (cc < 0) {
+	free(hdr);
+	return NULL;
+    }
+
+    hdr2 = rep.header;
+    if (hdr2->opcode != BROKER_OK) {
+	free(hdr);
+	return NULL;
+    }
+
+    /* Decode and print
+     */
+    s = calloc(1, sizeof(struct rb_status));
+    sscanf(rep.msg_buf, "%ld %d %lf %lf %lf", &s->uptime, &s->pid,
+	   &s->load[0], &s->load[1], &s->load[2]);
+    free(rep.msg_buf);
+
+    return s;
+}
+
+char *
+rb_broker_params(struct rb_daemon_id *r)
+{
+    struct rb_message req;
+    struct rb_message rep;
+    struct rb_header *hdr;
+    struct rb_header *hdr2;
+    int cc;
+
+    hdr = calloc(1, sizeof(struct rb_header));
+    hdr->opcode = BROKER_PARAMS;
+    hdr->len = 0;
+    req.header = hdr;
+
+    cc = nio_client_rw(r, &req, &rep);
+    if (cc < 0) {
+	fprintf(stderr, "Network I/O error with the broker\n");
+	free(hdr);
+	return NULL;
+    }
+
+    hdr2 = rep.header;
+    if (hdr2->opcode != BROKER_OK) {
+	free(hdr);
+	free(rep.header);
+	return NULL;
+    }
+    free(hdr);
+    free(rep.header);
+
+    return rep.msg_buf;
 }
 
 char *
