@@ -43,7 +43,7 @@ enum {
     BROKER_SERVER_REGISTER
 };
 
-/* Reply from broker or message to client
+/* Reply from broker or message from broker to client
  */
 enum {
     BROKER_OK,
@@ -52,6 +52,11 @@ enum {
     BROKER_VM_STOP,
     BROKER_CONTAINER_START,
     BROKER_CONTAINER_STOP
+};
+
+struct rb_broker {
+    char *name;
+    int port;
 };
 
 /* Message header for all broker communications
@@ -68,24 +73,42 @@ struct rb_message {
     char *msg_buf;
 };
 
-/* rbserver status
- */
-typedef enum {
-    SERVER_REGISTERED,
-    SERVER_UNREGISTERED
-} server_stat_t;
+enum {
+    SERVER_TYPE_VM,
+    SERVER_TYPE_CONTAINER,
+    SERVER_TYPE_CLOUD
+};
+
+enum {
+    MACHINE_VMS,
+    MACHINE_CONTAINERS,
+    MACHINE_CLOUD
+};
+
+enum {
+    MACHINE_ON,
+    MACHINE_OFF
+};
+
+struct rb_machine {
+    char *name;
+    int type;
+    int status;
+};
 
 struct rb_server {
     int socket;
     char *name;
-    server_stat_t type;
-    int max_instances;
+    int type;
+    int num_machines;
+    struct rb_machine *m;
 };
 
-extern int nio_client_rw(struct rb_daemon_id *,
-			 struct rb_message *,
-			 struct rb_message *);
+extern ssize_t nio_client_rw(struct rb_daemon_id *,
+			     struct rb_message *,
+			     struct rb_message *);
 extern char *remote_addr(int);
 extern char *resolve_name(const char *);
+extern struct rb_broker *get_broker(const char *);
 
 #endif

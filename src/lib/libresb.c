@@ -14,10 +14,10 @@ get_daemon_id(char *s)
     d = calloc(1, sizeof(struct rb_daemon_id));
 
     p = strchr(s, '@');
-    p = 0;
+    *p = 0;
     d->ip = strdup(s);
     ++p;
-    d->port = atoi(s);
+    d->port = atoi(p);
 
     return d;
 }

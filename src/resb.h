@@ -1,4 +1,4 @@
-/* Service Resource Broker API
+/* Service Resource Broker user API
  * Define users' API
  */
 

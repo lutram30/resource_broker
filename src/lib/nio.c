@@ -9,6 +9,10 @@
  */
 #include "nio.h"
 
+/* The idea behind this module is that the epoll file descriptor is private
+ * to the library. The client/server communicate with each other using the
+ * socket the libraryh returns.
+ */
 static int efd;
 
 int
@@ -64,6 +68,29 @@ nio_server_init(int port)
     return s;
 }
 
+int
+nio_client_init(const char *ip, int port)
+{
+    int s = nio_client_connect(port, ip);
+    if (s < 0) {
+	close(s);
+	return -1;
+    }
+
+    efd = epoll_create(1024);
+    struct epoll_event ev;
+    ev.events = EPOLLIN;
+    ev.data.fd = s;
+
+    int cc = epoll_ctl(efd, EPOLL_CTL_ADD, s, &ev);
+    if (cc < 0) {
+	close(s);
+	return -1;
+    }
+
+    return s;
+}
+
 /* nio_epoll()
  */
 int
@@ -73,7 +100,20 @@ nio_epoll(struct epoll_event *events, int ms)
 
     nready = epoll_wait(efd, events, MAX_EVENTS, ms);
     if (nready < 0) {
+	return -1;
+    }
 
+    return nready;
+}
+
+int
+nio_epoll2(struct epoll_event *events, int num_events, int ms)
+{
+    int nready;
+
+    nready = epoll_wait(efd, events, num_events, ms);
+    if (nready < 0) {
+	return -1;
     }
 
     return nready;
@@ -128,13 +168,13 @@ nio_block(int s)
     fcntl(s, F_SETFL, fcntl(s, F_GETFL) & ~O_NONBLOCK);
 }
 
-int
+ssize_t
 nio_client_rw(struct rb_daemon_id *r,
 	      struct rb_message *req,
 	      struct rb_message *rep)
 {
     int s;
-    int cc;
+    ssize_t cc;
     struct rb_header *hdr;
 
     s = nio_client_connect(r->port, r->ip);
@@ -226,7 +266,7 @@ nio_client_connect(int server_port, const char *server_addr)
  * that has that many bytes left before the end-of-file,
  * but in no other case.
  */
-int
+ssize_t
 nio_readblock(int s, void *buf, size_t L)
 {
     int c;
@@ -252,7 +292,7 @@ nio_readblock(int s, void *buf, size_t L)
 
 /* write a socket in blocking mode
  */
-int
+ssize_t
 nio_writeblock(int s, const void *buf, size_t L)
 {
     int c;

@@ -30,17 +30,6 @@ struct parameters {
 extern struct parameters *params;
 
 typedef enum {
-    MACHINE_VMS,
-    MACHINE_CONTAINERS,
-    MACHINE_CLOUD
-} mach_t;
-
-struct machine {
-    char *name;
-    int type;
-};
-
-typedef enum {
     QUEUE_STAT_IDLE,
     QUEUE_STAT_BORROWING,
 } queue_stat_t;
@@ -48,17 +37,34 @@ typedef enum {
 struct queue {
     char *name;
     queue_stat_t status;
-    mach_t type;
+    int type;           /* machine types */
     char *name_space;
     link_t *machines;
     /* Every borrow_factor[0] add borrow_factor[1] hosts/containers
      */
     int borrow_factor[2];
 };
-extern struct queue *rqueue;
+
+/* server status
+ */
+typedef enum {
+    SERVER_REGISTERED,
+    SERVER_UNREGISTERED
+} server_stat_t;
+
+struct server {
+    int socket;
+    char *name;
+    server_stat_t status;
+    int type;
+    int max_instances;
+};
+
 extern link_t *queues;
+extern link_t *servers;
 
 extern int read_config(const char *);
-extern int status_info(int, struct rb_header *);
-extern int params_info(int, struct rb_header *);
-extern int queue_info(int, struct rb_header *);
+extern ssize_t status_info(int, struct rb_header *);
+extern ssize_t params_info(int, struct rb_header *);
+extern ssize_t queue_info(int, struct rb_header *);
+extern ssize_t server_register(int, struct rb_header *);

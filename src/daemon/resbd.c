@@ -17,6 +17,7 @@ static char debug;
 struct resbd *res;
 struct parameters *params;
 link_t *queues;
+link_t *servers;
 time_t my_uptime;
 
 static int init_main_data(void);
@@ -27,8 +28,9 @@ static void open_log(void);
 
 static void usage(void)
 {
-    fprintf(stderr, "resbd: [-v prints version] \
-[-f set configuration file. default is /usr/local/etc/resdb.conf]\n");
+    fprintf(stderr, "resbd: [-h print this help] [-v prints version] \
+[-f set configuration file. default is /usr/local/etc/resdb.conf] \
+[-d debug]\n");
 }
 
 int
@@ -42,7 +44,7 @@ main(int argc, char **argv)
     cfile = "/usr/local/etc/resdb.conf";
     debug = 0;
 
-    while ((cc = getopt(argc, argv, "vf:2")) != EOF) {
+    while ((cc = getopt(argc, argv, "hvf:d")) != EOF) {
 	switch (cc) {
 	case 'v':
 	    printf("RESBD_VERSION\n");
@@ -50,8 +52,8 @@ main(int argc, char **argv)
 	case 'f':
 	    cfile = optarg;
 	    break;
-	case '2':
-	    debug = 2;
+	case 'd':
+	    debug = 1;
 	    break;
 	case '?':
 	default:
@@ -97,6 +99,7 @@ init_main_data(void)
     params = calloc(1, sizeof(struct parameters));
 
     queues = link_make();
+    servers = link_make();
 
     time(&my_uptime);
 
@@ -163,7 +166,19 @@ handle_events(int nready, struct epoll_event *e)
 
 	    continue;
 	}
-	handle_connection(events[cc].data.fd);
+
+	if (events[cc].events & (EPOLLERR | EPOLLHUP)) {
+	    syslog(LOG_ERR, "%s: epoll error on connection with %s", __func__,
+		   remote_addr(events[cc].data.fd));
+	    close(events[cc].data.fd);
+	    nio_epoll_del(events[cc].data.fd);
+	    continue;
+	}
+	/* Event is in read
+	 */
+	if (events[cc].events & EPOLLIN) {
+	    handle_connection(events[cc].data.fd);
+	}
     }
 
     return 0;
@@ -175,14 +190,11 @@ handle_connection(int s)
     struct rb_header hdr;
     ssize_t cc;
 
-    /* The socker should be blocked
-     */
-    nio_epoll_del(s);
-
     cc = nio_readblock(s, &hdr, sizeof(struct rb_header));
     if (cc < 0) {
 	syslog(LOG_ERR, "%s: failed reading header from %s",
 	       __func__, remote_addr(s));
+	nio_epoll_del(s);
 	close(s);
 	return;
     }
@@ -190,12 +202,22 @@ handle_connection(int s)
     switch (hdr.opcode) {
     case BROKER_STATUS:
 	status_info(s, &hdr);
+	nio_epoll_del(s);
+	close(s);
 	break;
     case BROKER_PARAMS:
 	params_info(s, &hdr);
+	nio_epoll_del(s);
+	close(s);
 	break;
     case BROKER_QUEUE_STATUS:
 	queue_info(s, &hdr);
+	nio_epoll_del(s);
+	close(s);
+	break;
+    case BROKER_SERVER_REGISTER:
+	cc = server_register(s, &hdr);
+	break;
     default:
 	break;
     }
