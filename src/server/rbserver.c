@@ -72,14 +72,14 @@ main(int argc, char **argv)
     dump_srv();
 
     srv->socket = register_with_broker(id);
-    if (cc < 0) {
+    if (srv->socket < 0) {
 	syslog(LOG_ERR, "rbserver; failed to register with broker %m");
 	close(srv->socket);
 	return -1;
     }
 
     while (1) {
-	int ms = 20 * 1000;
+	int ms = -1;
 
 	cc = nio_epoll2(events, MAX_SRV_EVENTS, ms);
 	if (cc < 0) {
@@ -172,8 +172,14 @@ open_server_log(const char *level)
 static void
 dump_srv(void)
 {
+    int i;
+
     syslog(LOG_INFO, "%s; server has socket %d serving type %s", __func__,
 	   srv->socket, srv_type2str(srv->type));
+
+    syslog(LOG_INFO, "%s: machines:", __func__);
+    for (i = 0; i < srv->num_machines; i++)
+	syslog(LOG_INFO, " %s:", srv->m[i].name);
 }
 
 static const char *

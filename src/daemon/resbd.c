@@ -25,6 +25,7 @@ static void manage_resources(void);
 static int handle_events(int, struct epoll_event *);
 static void handle_connection(int);
 static void open_log(void);
+static void dump_config(void);
 
 static void usage(void)
 {
@@ -69,6 +70,8 @@ main(int argc, char **argv)
 
     open_log();
 
+    dump_config();
+
     /* Initialize the network layer
      */
     res->sock = nio_server_init(res->port);
@@ -76,10 +79,11 @@ main(int argc, char **argv)
 
     while (1) {
 	int nready;
-	int ms = -1;
 
-	nready = nio_epoll(events, ms);
+	nready = nio_epoll(events, res->epoll_timer);
 	if (nready < 0) {
+	    syslog(LOG_ERR, "resdb: network I/O error reported by epoll %m");
+	    continue;
 	}
 
 	handle_events(nready, events);
@@ -94,7 +98,7 @@ static int
 init_main_data(void)
 {
     res = calloc(1, sizeof(struct resbd));
-    res->epoll_timer = -1; /* ms */
+    res->epoll_timer = EPOLL_TIMER * 1000;
 
     params = calloc(1, sizeof(struct parameters));
 
@@ -217,12 +221,16 @@ handle_connection(int s)
 	break;
     case BROKER_SERVER_REGISTER:
 	cc = server_register(s, &hdr);
+	if (cc > 0) {
+	    syslog(LOG_ERR, "%s: failed to register server at %d %s",
+		   __func__, s, remote_addr(s));
+	    nio_epoll_del(s);
+	    close(s);
+	}
 	break;
     default:
 	break;
     }
-
-    close(s);
 
     return;
 
@@ -231,7 +239,43 @@ handle_connection(int s)
 static void
 manage_resources(void)
 {
+    static time_t last;
+    char buf[64];
+    time_t t = time(NULL);
+
     syslog(LOG_INFO, "%s: processing", __func__);
 
-    return;
+    if (last == 0) {
+	last = t;
+	check_queue_workload();
+	return;
+    }
+
+    if (! (t - last >= RESOURCE_DETECT_TIMER))
+	return;
+
+    last = t;
+
+    syslog(LOG_INFO, "%s: now %s check need for compute resources", __func__,
+	   my_time(buf));
+
+    check_queue_workload();
+}
+
+static void
+dump_config(void)
+{
+    /* Dump params
+     */
+
+    /* Dump queues
+     */
+    link_t *l;
+    for (l = queues->next; l != NULL; l = l->next) {
+	struct queue *q = (struct queue *)l->ptr;
+	syslog(LOG_INFO, "%s: queue:%s status:%d name_space:%s borrow factor: %d,%d",
+	       __func__, q->name, q->status, q->name_space, q->borrow_factor[0],
+	       q->borrow_factor[1]);
+    }
+
 }

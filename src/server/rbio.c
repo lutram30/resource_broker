@@ -11,7 +11,7 @@ register_with_broker(struct rb_daemon_id *id)
 
     s = nio_client_init(id->ip, id->port);
 
-    sprintf(buf, "%d %d %d", srv->socket, srv->type, srv->num_machines);
+    sprintf(buf, "%d %d %d", s, srv->type, srv->num_machines);
     for (i = 0; i < srv->num_machines; i++) {
 	sprintf(buf + strlen(buf), " %s", srv->m[i].name);
     }
@@ -57,5 +57,6 @@ register_with_broker(struct rb_daemon_id *id)
 int
 process_broker_request(int s, struct epoll_event *ev)
 {
+
     return 0;
 }

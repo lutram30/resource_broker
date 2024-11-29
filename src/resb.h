@@ -37,5 +37,6 @@ extern struct rb_daemon_id *get_daemon_id(char *);
 extern void free_daemon_id(struct rb_daemon_id *);
 extern struct rb_status *rb_broker_status(struct rb_daemon_id *r);
 extern char *rb_broker_params(struct rb_daemon_id *);
+extern char *my_time(char *);
 
 #endif

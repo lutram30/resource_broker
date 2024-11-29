@@ -6,6 +6,8 @@
 
 #define RESBD_VERSION "0.1"
 #define MAX_QUEUES 10
+#define RESOURCE_DETECT_TIMER 30
+#define EPOLL_TIMER 10
 
 /* Resource Broker Daemon
  */
@@ -43,6 +45,7 @@ struct queue {
     /* Every borrow_factor[0] add borrow_factor[1] hosts/containers
      */
     int borrow_factor[2];
+    int panding_jobs;
 };
 
 /* server status
@@ -68,3 +71,4 @@ extern ssize_t status_info(int, struct rb_header *);
 extern ssize_t params_info(int, struct rb_header *);
 extern ssize_t queue_info(int, struct rb_header *);
 extern ssize_t server_register(int, struct rb_header *);
+extern void check_queue_workload(void);

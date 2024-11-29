@@ -223,6 +223,8 @@ nio_client_rw(struct rb_daemon_id *r,
 	return -1;
     }
 
+    close(s);
+
     return 0;
 }
 

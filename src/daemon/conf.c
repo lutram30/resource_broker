@@ -10,6 +10,7 @@ static int init_params(const char *, const char *);
 static int init_queue(const char *, const char *, const char *);
 static int handler(void *, const char *, const char *, const char *);
 static struct queue *get_queue_by_name(const char *);
+static void set_default_params(void);
 
 int
 read_config(const char *file)
@@ -62,6 +63,8 @@ init_resbd(const char *key, const char *val)
 static int
 init_params(const char *key, const char *val)
 {
+    set_default_params();
+
     if (strcasecmp(key, "scheduler") == 0) {
         params->scheduler = strdup(val);
     } else if (strcasecmp(key, "work_dir") == 0) {
@@ -83,6 +86,18 @@ init_params(const char *key, const char *val)
     return 1;
 }
 
+static void
+set_default_params(void)
+{
+    params->scheduler = strdup("slurm");
+    params->container_runtime = strdup("docker");
+    params->vm_runtime = strdup("virsh");
+    /* Seconds
+     */
+    params->workload_timer = 30;
+    params->log_mask = strdup("LOG_INFO");
+}
+
 static int
 init_queue(const char *qname, const char *key, const char *val)
 {
@@ -100,7 +115,7 @@ init_queue(const char *qname, const char *key, const char *val)
         q->name_space = strdup(val);
     }
     if (strcasecmp(key, "borrow_factor") == 0) {
-        sscanf(val, "%d%d", &q->borrow_factor[0], &q->borrow_factor[1]);
+        sscanf(val, "%d %d", &q->borrow_factor[0], &q->borrow_factor[1]);
     }
     if (strcasecmp(key, "type") == 0) {
 	if (strcasecmp(val, "vm") == 0) {

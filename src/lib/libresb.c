@@ -153,3 +153,13 @@ resolve_name(const char *name)
 
     return NULL;
 }
+
+char *
+my_time(char *buf)
+{
+    time_t t = time(NULL);
+    ctime_r(&t, buf);
+    buf[strlen(buf) - 1] = 0;
+
+    return buf;
+}
