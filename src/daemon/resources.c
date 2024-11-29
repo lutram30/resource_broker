@@ -10,7 +10,7 @@ check_queue_workload(void)
     struct queue *q;
 
     for (l = queues ->next; l != NULL; l = l->next) {
-	q = (struct queue *)l->ptr;
-	syslog(LOG_INFO, "%s: look at queue %s", __func__, q->name);
+        q = (struct queue *)l->ptr;
+        syslog(LOG_INFO, "%s: look at queue %s", __func__, q->name);
     }
 }

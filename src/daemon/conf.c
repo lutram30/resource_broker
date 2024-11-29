@@ -37,8 +37,8 @@ static int handler(void *user,
     }
 
     if (strstr(section, "queue")) {
-	char qname[MAX_NAME_LEN];
-	sscanf(section, "%*s%s", qname);
+        char qname[MAX_NAME_LEN];
+        sscanf(section, "%*s%s", qname);
         return init_queue(qname, key, value);
     }
 
@@ -68,19 +68,19 @@ init_params(const char *key, const char *val)
     if (strcasecmp(key, "scheduler") == 0) {
         params->scheduler = strdup(val);
     } else if (strcasecmp(key, "work_dir") == 0) {
-	params->work_dir = strdup(val);
+        params->work_dir = strdup(val);
     } else  if (strcasecmp(key, "container_runtime") == 0) {
-	params->container_runtime = strdup(val);
+        params->container_runtime = strdup(val);
     } else if (strcasecmp(key, "vm_runtime") == 0) {
-	params->vm_runtime = strdup(val);
+        params->vm_runtime = strdup(val);
     } else if (strcasecmp(key, "workload_timer") == 0) {
         params->workload_timer = atoi(val);
     } if (strcasecmp(key, "log_mask") == 0) {
-	int i;
-	char *C = strdup(val);
-	for (i = 0; val[i]; i++)
-	    C[i] = toupper(val[i]);
-	params->log_mask = strdup(C);
+        int i;
+        char *C = strdup(val);
+        for (i = 0; val[i]; i++)
+            C[i] = toupper(val[i]);
+        params->log_mask = strdup(C);
     }
 
     return 1;
@@ -118,17 +118,17 @@ init_queue(const char *qname, const char *key, const char *val)
         sscanf(val, "%d %d", &q->borrow_factor[0], &q->borrow_factor[1]);
     }
     if (strcasecmp(key, "type") == 0) {
-	if (strcasecmp(val, "vm") == 0) {
-	    q->type = MACHINE_VMS;
-	} else if (strcasecmp(val, "container") == 0) {
-	    q->type = MACHINE_CONTAINERS;
-	} else if (strcasecmp(val, "cloud") == 0) {
-	    q->type = MACHINE_CLOUD;
-	} else {
-	    /* Default is VM
-	     */
-	    q->type = MACHINE_VMS;
-	}
+        if (strcasecmp(val, "vm") == 0) {
+            q->type = MACHINE_VMS;
+        } else if (strcasecmp(val, "container") == 0) {
+            q->type = MACHINE_CONTAINERS;
+        } else if (strcasecmp(val, "cloud") == 0) {
+            q->type = MACHINE_CLOUD;
+        } else {
+            /* Default is VM
+             */
+            q->type = MACHINE_VMS;
+        }
     }
     return 1;
 }

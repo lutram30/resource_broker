@@ -46,21 +46,21 @@ main(int argc, char **argv)
     debug = 0;
 
     while ((cc = getopt(argc, argv, "hvf:d")) != EOF) {
-	switch (cc) {
-	case 'v':
-	    printf("RESBD_VERSION\n");
-	    return 0;
-	case 'f':
-	    cfile = optarg;
-	    break;
-	case 'd':
-	    debug = 1;
-	    break;
-	case '?':
-	default:
-	    usage();
-	    return -1;
-	}
+        switch (cc) {
+        case 'v':
+            printf("RESBD_VERSION\n");
+            return 0;
+        case 'f':
+            cfile = optarg;
+            break;
+        case 'd':
+            debug = 1;
+            break;
+        case '?':
+        default:
+            usage();
+            return -1;
+        }
     }
 
     init_main_data();
@@ -78,17 +78,17 @@ main(int argc, char **argv)
     syslog(LOG_INFO, "%s: daemon started on port %d", __func__, res->port);
 
     while (1) {
-	int nready;
+        int nready;
 
-	nready = nio_epoll(events, res->epoll_timer);
-	if (nready < 0) {
-	    syslog(LOG_ERR, "resdb: network I/O error reported by epoll %m");
-	    continue;
-	}
+        nready = nio_epoll(events, res->epoll_timer);
+        if (nready < 0) {
+            syslog(LOG_ERR, "resdb: network I/O error reported by epoll %m");
+            continue;
+        }
 
-	handle_events(nready, events);
+        handle_events(nready, events);
 
-	manage_resources();
+        manage_resources();
     }
 
     return 0;
@@ -116,25 +116,25 @@ open_log(void)
     int mask;
 
     if (params->log_mask == NULL)
-	params->log_mask = strdup("LOG_INFO");
+        params->log_mask = strdup("LOG_INFO");
 
     if (strcmp(params->log_mask, "LOG_ERR") == 0)
-	mask = LOG_ERR;
+        mask = LOG_ERR;
     else if (strcmp(params->log_mask, "LOG_WARNING") == 0)
-	mask = LOG_WARNING;
+        mask = LOG_WARNING;
     else if (strcmp(params->log_mask, "LOG_INFO") == 0)
-	mask = LOG_INFO;
+        mask = LOG_INFO;
     else if (strcmp(params->log_mask, "LOG_DEBUG") == 0)
-	mask = LOG_DEBUG;
+        mask = LOG_DEBUG;
     else
-	mask = LOG_INFO;
+        mask = LOG_INFO;
 
     setlogmask(LOG_UPTO(mask));
 
     if (debug)
-	openlog("resbd", LOG_NDELAY|LOG_PERROR|LOG_PID, LOG_DAEMON);
+        openlog("resbd", LOG_NDELAY|LOG_PERROR|LOG_PID, LOG_DAEMON);
     else
-	openlog("resbd", LOG_NDELAY|LOG_PID, LOG_DAEMON);
+        openlog("resbd", LOG_NDELAY|LOG_PID, LOG_DAEMON);
 }
 
 static int
@@ -143,46 +143,46 @@ handle_events(int nready, struct epoll_event *e)
     int cc;
 
     for (cc = 0; cc < nready; cc++) {
-	socklen_t addrlen;
-	struct sockaddr_in addr;
-	struct s;
-	int as;
+        socklen_t addrlen;
+        struct sockaddr_in addr;
+        struct s;
+        int as;
 
-	if (events[cc].data.fd == res->sock) {
-	    as = accept(res->sock,
-			(struct sockaddr *)&addr, &addrlen);
-	    if (as == -1) {
-		syslog(LOG_ERR, "%s: accept() failed %m", __func__);
-		return -1;
-	    }
+        if (events[cc].data.fd == res->sock) {
+            as = accept(res->sock,
+                        (struct sockaddr *)&addr, &addrlen);
+            if (as == -1) {
+                syslog(LOG_ERR, "%s: accept() failed %m", __func__);
+                return -1;
+            }
 
-	    /* Block as we want to read everything in the next
-	     * read call
-	     */
-	    nio_block(as);
+            /* Block as we want to read everything in the next
+             * read call
+             */
+            nio_block(as);
 
-	    ev.events = EPOLLIN;
-	    ev.data.fd = as;
+            ev.events = EPOLLIN;
+            ev.data.fd = as;
 
-	    nio_epoll_add(as, &ev);
+            nio_epoll_add(as, &ev);
 
-	    syslog(LOG_DEBUG, "%s: connection accepted %d", __func__, as);
+            syslog(LOG_DEBUG, "%s: connection accepted %d", __func__, as);
 
-	    continue;
-	}
+            continue;
+        }
 
-	if (events[cc].events & (EPOLLERR | EPOLLHUP)) {
-	    syslog(LOG_ERR, "%s: epoll error on connection with %s", __func__,
-		   remote_addr(events[cc].data.fd));
-	    close(events[cc].data.fd);
-	    nio_epoll_del(events[cc].data.fd);
-	    continue;
-	}
-	/* Event is in read
-	 */
-	if (events[cc].events & EPOLLIN) {
-	    handle_connection(events[cc].data.fd);
-	}
+        if (events[cc].events & (EPOLLERR | EPOLLHUP)) {
+            syslog(LOG_ERR, "%s: epoll error on connection with %s", __func__,
+                   remote_addr(events[cc].data.fd));
+            close(events[cc].data.fd);
+            nio_epoll_del(events[cc].data.fd);
+            continue;
+        }
+        /* Event is in read
+         */
+        if (events[cc].events & EPOLLIN) {
+            handle_connection(events[cc].data.fd);
+        }
     }
 
     return 0;
@@ -196,40 +196,40 @@ handle_connection(int s)
 
     cc = nio_readblock(s, &hdr, sizeof(struct rb_header));
     if (cc < 0) {
-	syslog(LOG_ERR, "%s: failed reading header from %s",
-	       __func__, remote_addr(s));
-	nio_epoll_del(s);
-	close(s);
-	return;
+        syslog(LOG_ERR, "%s: failed reading header from %s",
+               __func__, remote_addr(s));
+        nio_epoll_del(s);
+        close(s);
+        return;
     }
 
     switch (hdr.opcode) {
     case BROKER_STATUS:
-	status_info(s, &hdr);
-	nio_epoll_del(s);
-	close(s);
-	break;
+        status_info(s, &hdr);
+        nio_epoll_del(s);
+        close(s);
+        break;
     case BROKER_PARAMS:
-	params_info(s, &hdr);
-	nio_epoll_del(s);
-	close(s);
-	break;
+        params_info(s, &hdr);
+        nio_epoll_del(s);
+        close(s);
+        break;
     case BROKER_QUEUE_STATUS:
-	queue_info(s, &hdr);
-	nio_epoll_del(s);
-	close(s);
-	break;
+        queue_info(s, &hdr);
+        nio_epoll_del(s);
+        close(s);
+        break;
     case BROKER_SERVER_REGISTER:
-	cc = server_register(s, &hdr);
-	if (cc > 0) {
-	    syslog(LOG_ERR, "%s: failed to register server at %d %s",
-		   __func__, s, remote_addr(s));
-	    nio_epoll_del(s);
-	    close(s);
-	}
-	break;
+        cc = server_register(s, &hdr);
+        if (cc > 0) {
+            syslog(LOG_ERR, "%s: failed to register server at %d %s",
+                   __func__, s, remote_addr(s));
+            nio_epoll_del(s);
+            close(s);
+        }
+        break;
     default:
-	break;
+        break;
     }
 
     return;
@@ -246,18 +246,18 @@ manage_resources(void)
     syslog(LOG_INFO, "%s: processing", __func__);
 
     if (last == 0) {
-	last = t;
-	check_queue_workload();
-	return;
+        last = t;
+        check_queue_workload();
+        return;
     }
 
     if (! (t - last >= RESOURCE_DETECT_TIMER))
-	return;
+        return;
 
     last = t;
 
     syslog(LOG_INFO, "%s: now %s check need for compute resources", __func__,
-	   my_time(buf));
+           my_time(buf));
 
     check_queue_workload();
 }
@@ -272,10 +272,10 @@ dump_config(void)
      */
     link_t *l;
     for (l = queues->next; l != NULL; l = l->next) {
-	struct queue *q = (struct queue *)l->ptr;
-	syslog(LOG_INFO, "%s: queue:%s status:%d name_space:%s borrow factor: %d,%d",
-	       __func__, q->name, q->status, q->name_space, q->borrow_factor[0],
-	       q->borrow_factor[1]);
+        struct queue *q = (struct queue *)l->ptr;
+        syslog(LOG_INFO, "%s: queue:%s status:%d name_space:%s borrow factor: %d,%d",
+               __func__, q->name, q->status, q->name_space, q->borrow_factor[0],
+               q->borrow_factor[1]);
     }
 
 }
