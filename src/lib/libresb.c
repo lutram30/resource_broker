@@ -163,3 +163,16 @@ my_time(char *buf)
 
     return buf;
 }
+
+char *
+srv_type2str(int type)
+{
+    if (type == SERVER_TYPE_VM)
+        return "SERVER_TYPE_VM";
+    if (type == SERVER_TYPE_CONTAINER)
+        return "SERVER_TYPE_CONTAINER";
+    if (type == SERVER_TYPE_CLOUD)
+        return "SERVER_TYPE_CLOUD";
+
+    return "Unknown type";
+}

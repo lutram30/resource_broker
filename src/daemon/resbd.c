@@ -19,6 +19,7 @@ struct parameters *params;
 link_t *queues;
 link_t *servers;
 time_t my_uptime;
+char simulate = 0;
 
 static int init_main_data(void);
 static void manage_resources(void);
@@ -31,7 +32,7 @@ static void usage(void)
 {
     fprintf(stderr, "resbd: [-h print this help] [-v prints version] \
 [-f set configuration file. default is /usr/local/etc/resdb.conf] \
-[-d debug]\n");
+[-d debug] [-S run in simulation mode]\n");
 }
 
 int
@@ -45,7 +46,7 @@ main(int argc, char **argv)
     cfile = "/usr/local/etc/resdb.conf";
     debug = 0;
 
-    while ((cc = getopt(argc, argv, "hvf:d")) != EOF) {
+    while ((cc = getopt(argc, argv, "hvf:dS")) != EOF) {
         switch (cc) {
         case 'v':
             printf("RESBD_VERSION\n");
@@ -55,6 +56,9 @@ main(int argc, char **argv)
             break;
         case 'd':
             debug = 1;
+            break;
+        case 'S':
+            simulate = 1;
             break;
         case '?':
         default:

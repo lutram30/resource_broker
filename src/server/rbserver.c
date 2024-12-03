@@ -17,7 +17,6 @@ static void open_server_log(const char *);
 static int process_machine_file(const char *);
 static void periodic(void);
 static void dump_srv(void);
-static const char *srv_type2str(int);
 
 static void
 help(void)
@@ -180,17 +179,4 @@ dump_srv(void)
     syslog(LOG_INFO, "%s: machines:", __func__);
     for (i = 0; i < srv->num_machines; i++)
         syslog(LOG_INFO, " %s:", srv->m[i].name);
-}
-
-static const char *
-srv_type2str(int type)
-{
-    if (srv->type == SERVER_TYPE_VM)
-        return "SERVER_TYPE_VM";
-    if (srv->type == SERVER_TYPE_CONTAINER)
-        return "SERVER_TYPE_CONTAINER";
-    if (srv->type == SERVER_TYPE_CLOUD)
-        return "SERVER_TYPE_CLOUD";
-
-    return "Unknown type";
 }

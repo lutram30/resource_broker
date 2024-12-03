@@ -19,6 +19,7 @@ struct resbd {
 };
 extern struct resbd *res;
 extern time_t my_uptime;
+extern char simulate;
 
 struct parameters {
     char *scheduler;
@@ -45,7 +46,7 @@ struct queue {
     /* Every borrow_factor[0] add borrow_factor[1] hosts/containers
      */
     int borrow_factor[2];
-    int panding_jobs;
+    int num_pend_jobs;
 };
 
 /* server status

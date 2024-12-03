@@ -80,6 +80,12 @@ enum {
 };
 
 enum {
+    SERVER_STATUS_OK,
+    SERVER_STATUS_ALLOCATED,
+    SERVER_STATUS_BUSY
+};
+
+enum {
     MACHINE_VMS,
     MACHINE_CONTAINERS,
     MACHINE_CLOUD
@@ -100,6 +106,7 @@ struct rb_server {
     int socket;
     char *name;
     int type;
+    int status;
     int num_machines;
     struct rb_machine *m;
 };
@@ -110,5 +117,6 @@ extern ssize_t nio_client_rw(struct rb_daemon_id *,
 extern char *remote_addr(int);
 extern char *resolve_name(const char *);
 extern struct rb_broker *get_broker(const char *);
+extern char *srv_type2str(int);
 
 #endif
