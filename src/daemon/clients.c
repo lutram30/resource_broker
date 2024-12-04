@@ -97,8 +97,6 @@ server_register(int s, struct rb_header *hdr)
 
     syslog(LOG_DEBUG, "%s: processing", __func__);
 
-    srv = calloc(1, sizeof(struct server));
-
     cc = nio_readblock(s, buf, hdr->len);
     if (cc < 0) {
         syslog(LOG_ERR, "%s: failed reading %ld bytes from %s %m", __func__,
@@ -106,11 +104,13 @@ server_register(int s, struct rb_header *hdr)
         return -1;
     }
 
-    srv->name = calloc(1, MAX_NAME_LEN);
-    sscanf(buf, "%d %s %d", &srv->socket, srv->name, &srv->max_instances);
-    srv->status = SERVER_REGISTERED;
+    srv = calloc(1, sizeof(struct server));
 
-    link_enque(servers, srv);
+    srv->socket = s;
+    srv->name = calloc(1, MAXHOSTNAMELEN);
+    sscanf(buf, "%d %s %d", &srv->type, srv->name, &srv->max_instances);
+    srv->status = SERVER_REGISTERED;
+    srv->type = SERVER_TYPE_VM;
 
     struct rb_header hdr2;
     hdr2.opcode = BROKER_OK;
@@ -120,8 +120,16 @@ server_register(int s, struct rb_header *hdr)
     if (cc < 0) {
         syslog(LOG_ERR, "%s: failed sending header to %s %m", __func__,
                remote_addr(s));
+        free_server(srv);
         return -1;
     }
 
+    link_enque(servers, srv);
+
     return 0;
+}
+
+void
+free_server(struct server *s)
+{
 }

@@ -6,7 +6,7 @@
 
 #define RESBD_VERSION "0.1"
 #define MAX_QUEUES 10
-#define RESOURCE_DETECT_TIMER 30
+#define RESOURCE_DETECT_TIMER 10
 #define EPOLL_TIMER 10
 
 /* Resource Broker Daemon
@@ -73,3 +73,4 @@ extern ssize_t params_info(int, struct rb_header *);
 extern ssize_t queue_info(int, struct rb_header *);
 extern ssize_t server_register(int, struct rb_header *);
 extern void check_queue_workload(void);
+extern void free_server(struct server *);

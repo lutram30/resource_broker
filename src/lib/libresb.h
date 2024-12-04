@@ -18,6 +18,7 @@
 #include <ctype.h>
 #include <netdb.h>
 #include <linux/limits.h>
+#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/epoll.h>
@@ -100,6 +101,20 @@ struct rb_machine {
     char *name;
     int type;
     int status;
+};
+
+/* From broker to server request
+ */
+enum {
+    SERVER_GET_RESOURCES,
+    SERVER_RELEASE_RESOURCES
+};
+
+/* From server to broker reply
+ */
+enum {
+    SERVER_RESOURCES_OK,
+    SERVER_RESOURCES_BUSY
 };
 
 struct rb_server {

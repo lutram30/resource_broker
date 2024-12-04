@@ -84,7 +84,7 @@ main(int argc, char **argv)
     while (1) {
         int nready;
 
-        nready = nio_epoll(events, res->epoll_timer);
+        nready = nio_epoll(events, -1);
         if (nready < 0) {
             syslog(LOG_ERR, "resdb: network I/O error reported by epoll %m");
             continue;
@@ -251,7 +251,6 @@ manage_resources(void)
 
     if (last == 0) {
         last = t;
-        check_queue_workload();
         return;
     }
 

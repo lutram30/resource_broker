@@ -22,18 +22,18 @@ static void
 help(void)
 {
     fprintf(stderr, "rbserver -s ip@port -t [vm|container...] "
-            "-m nachinefile [-d debug classes log_info|log_err|..]\n");
+            "-m nachinefile -n name [-d debug classes log_info|log_err|..]\n");
 }
 
 int
 main(int argc, char **argv)
 {
-    int cc;
     struct rb_daemon_id *id;
+    int cc;
 
     srv = calloc(1, sizeof(struct rb_server));
 
-    while ((cc = getopt(argc, argv, "d:ht:s:m:")) != EOF) {
+    while ((cc = getopt(argc, argv, "d:ht:s:m:n:")) != EOF) {
         switch (cc) {
         case 't':
             if (strcasecmp(optarg, "vm") == 0)
@@ -61,6 +61,9 @@ main(int argc, char **argv)
             debug = 1;
             open_server_log(optarg);
             break;
+        case 'n':
+            srv->name = strdup(optarg);
+            break;
         case '?':
         case 'h':
             help();
@@ -72,7 +75,7 @@ main(int argc, char **argv)
 
     srv->socket = register_with_broker(id);
     if (srv->socket < 0) {
-        syslog(LOG_ERR, "rbserver; failed to register with broker %m");
+        syslog(LOG_ERR, "rbserver: failed to register with broker %m");
         close(srv->socket);
         return -1;
     }
@@ -80,20 +83,18 @@ main(int argc, char **argv)
     while (1) {
         int ms = -1;
 
-        cc = nio_epoll2(events, MAX_SRV_EVENTS, ms);
-        if (cc < 0) {
+        int nready = nio_epoll2(events, MAX_SRV_EVENTS, ms);
+        if (nready < 0) {
             syslog(LOG_ERR, "rbserver: nio_epoll() error %m");
             continue;
         }
 
-        if (cc == 0) {
+        if (nready == 0) {
             periodic();
             continue;
         }
 
-        /* cc must be one
-         */
-        process_broker_request(cc, events);
+        handle_broker_events(nready, events);
     }
 
     return 0;
@@ -173,8 +174,8 @@ dump_srv(void)
 {
     int i;
 
-    syslog(LOG_INFO, "%s; server has socket %d serving type %s", __func__,
-           srv->socket, srv_type2str(srv->type));
+    syslog(LOG_INFO, "%s: server name:%s is serving machine type: %s", __func__,
+           srv->name, srv_type2str(srv->type));
 
     syslog(LOG_INFO, "%s: machines:", __func__);
     for (i = 0; i < srv->num_machines; i++)

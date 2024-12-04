@@ -10,6 +10,7 @@
 extern struct rb_server *srv;
 
 extern int register_with_broker(struct rb_daemon_id *);
-extern int process_broker_request(int, struct epoll_event *);
+extern int process_broker_request(int);
+extern int handle_broker_events(int, struct epoll_event *);
 
 #endif

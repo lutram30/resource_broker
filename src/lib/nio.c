@@ -43,6 +43,7 @@ nio_server_init(int port)
 
     cc = bind(s, (struct sockaddr *)&addr, sizeof(struct sockaddr_in));
     if (cc < 0) {
+        syslog(LOG_ERR, "%s: bind failed on socker %d %m", __func__, s);
         close(s);
         return -1;
     }
