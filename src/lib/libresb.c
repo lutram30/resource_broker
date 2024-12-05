@@ -176,3 +176,14 @@ srv_type2str(int type)
 
     return "Unknown type";
 }
+
+char *
+srv_req2str(int op)
+{
+    if (op == SERVER_BOOT_RESOURCES)
+        return "SERVER_BOOT_RESOURCES";
+    if (op == SERVER_SHUT_RESOURCES)
+        return "SERVER_SHUT_RESOURCES";
+
+    return "Unknown operation code";
+}

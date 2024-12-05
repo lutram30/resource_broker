@@ -84,7 +84,10 @@ main(int argc, char **argv)
     while (1) {
         int nready;
 
-        nready = nio_epoll(events, -1);
+        /* This time out keeps changing at this stage because of
+         * testing
+         */
+        nready = nio_epoll(events, 30 * 1000);
         if (nready < 0) {
             syslog(LOG_ERR, "resdb: network I/O error reported by epoll %m");
             continue;

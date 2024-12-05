@@ -114,7 +114,7 @@ get_server_resources(struct queue *q, int num)
     }
 
     struct rb_header hdr;
-    hdr.opcode = SERVER_GET_RESOURCES;
+    hdr.opcode = SERVER_BOOT_RESOURCES;
     hdr.len = num;
 
     int cc = nio_writeblock(s->socket, &hdr, sizeof(struct rb_header));
@@ -130,21 +130,30 @@ get_server_resources(struct queue *q, int num)
         return -1;
     }
 
-    syslog(LOG_INFO, "%s: broker starting %ld machines", __func__, hdr2.len);
-    char  buf[1024] = {0};
+    syslog(LOG_INFO, "%s: broker starting %d machines", __func__, num);
+    char *buf = calloc(hdr2.len, sizeof(char));
+    char *buf0 = buf;
 
-    cc = nio_readblock(s->socket, buf, hdr.len);
+    cc = nio_readblock(s->socket, buf, hdr2.len);
     if (cc < 0) {
         syslog(LOG_ERR, "%s: failed reading buffer from broker %m", __func__);
+        free(buf);
         return -1;
     }
 
     char machine[MAXHOSTNAMELEN];
     int i;
-    for (i = 0; i < hdr2.len; i++) {
-        sscanf(buf + strlen(buf), "%s ", machine);
+    int nsend;
+    int nbytes;
+    sscanf(buf, "%d%n", &nsend, &nbytes);
+    buf = buf + nbytes;
+    for (i = 0; i < nsend; i++) {
+        sscanf(buf, "%s%n", machine, &nbytes);
+        buf = buf + nbytes;
         syslog(LOG_INFO, "%s: machine: %s", __func__, machine);
     }
+
+    free(buf0);
 
     return 0;
 }

@@ -30,6 +30,14 @@
 #include "link.h"
 #include "ini.h"
 
+/* In many places the system uses the #define BUFSIZ from stdio.h which is 8K.
+ * However at times much smaller buffers allocated on the stack, or even
+ * dynamically are more performant, so we define the following BUFSIZ variants
+ * small and medium BUFSISZ
+ */
+#define SBUFSIZ 64
+#define MBUFSIZ 128
+
 #define ERR (strerror(errno))
 /* Max epoll events
  */
@@ -106,8 +114,8 @@ struct rb_machine {
 /* From broker to server request
  */
 enum {
-    SERVER_GET_RESOURCES,
-    SERVER_RELEASE_RESOURCES
+    SERVER_BOOT_RESOURCES,
+    SERVER_SHUT_RESOURCES
 };
 
 /* From server to broker reply
@@ -133,5 +141,6 @@ extern char *remote_addr(int);
 extern char *resolve_name(const char *);
 extern struct rb_broker *get_broker(const char *);
 extern char *srv_type2str(int);
+extern char *srv_req2str(int);
 
 #endif
