@@ -26,5 +26,13 @@ src/daemons/resbd
 src/daemons/resbs
 src/cmd/rbparams
 src/daemon/resbd
-src/daemon/resbs
+et nonu
+rc/daemon/resbs
 src/server/rbserver
+doc/protocols.drawio.pdf
+doc/resource_broker.aux
+doc/resource_broker.log
+doc/resource_broker.pdf
+doc/resource_broker.toc
+src/cmd/texput.log
+

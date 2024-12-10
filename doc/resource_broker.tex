@@ -155,8 +155,8 @@ This picture on the next page shows the basic protocol between the daemon and th
 
 \section{Broker to Server Protocol}
 The broker and the server do establish a textit{TCP/IP} connection when they start.
-A synchronization protocol works such that the broker connects to available
-servers reading their hostname/ip addresses from a give configuration file.
+A synchronization protocol works such that a broker reads its configuration file
+by default in \textit{/usrlocal(etc/resdb.conf} adveriting its \textit{TCP/IP} port.
 There could be multiple servers for a given host registered at different ports.
 The textit{TCP/IP} connection between the broker and the server is permanent.\\
 
@@ -172,17 +172,25 @@ The broker protocol is simple, one it does receive the request fro the broker it
 puts itself in listening waiting for instruction from the broker. Since the
 textit{TCP/IP} connection between the broker and the server is permament, should
 it go dow the broker closes its connection and waits for further instructions
-from the broker.
+from the broker.\\
 
+The broker \textbf{must} be specified the netwotk address of the broker. The
+server does not read any configuration file.
 
 \section{User Interface}
-\ldots
+The user intarface is made of commands using the \textit{API} to display the
+status of the broker, the connected servers, the machines that are up serve the
+additional workload and so on.
+
 \chapter{Simulator}
 
 Currently the system runs in simulation mode. This is fundamental to debug the entire protocol suite and test the different possible algorithms to get and reclaim resources. The simulator uses text file in which the number of pending jobs per queue are written and a machinefile in which the number of available nodes are written for each server.
 
 \chapter{Experience with schedulers}
-......
+
+\subsection{Slurm}
+
+\subsection{OpenLava}
 
 %\begin{figure}[h]
 %\centering
