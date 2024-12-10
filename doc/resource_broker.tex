@@ -1,0 +1,193 @@
+\documentclass{report}
+\usepackage{titlesec}
+\usepackage{graphicx}
+
+% Customize chapter title size
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries} % Choose font size (\huge) and style
+  {\chaptername~\thechapter}{5pt}{\huge} % Spacing and title font size
+
+%We can define the environment in the preamble
+\newenvironment{boxed}
+    {\begin{center}
+    \begin{tabular}{|p{0.9\textwidth}|}
+    \hline\\
+    }
+    {
+    \\\\\hline
+    \end{tabular}
+    \end{center}
+    }
+% Language setting
+% Replace `english' with e.g. `spanish' to change the document language
+\usepackage[english]{babel}
+\title{\huge\textbf{Cluster Resources Broker}}
+\author{PrismaSPA}
+\date{\today}
+\begin{document}
+\maketitle
+\tableofcontents
+
+
+\chapter{Cluster Resource Broker}
+
+\section{Introduction}
+The Resource Cluster Broker is a software object that is able to mediate among different type of clusters allowing machine resources to \textit{flow} among clusters of different type. A machine that at one time servers in High Performance Cluster (HPC) can be used at another time to run services and vice versa. The objective of this work is the \textbf{Virtual Cluster} as described in this paper
+
+\chapter{HPC and Service Clusters}
+
+\section{HPC}
+HPC clusters are characterized by a high volume of job requests coming at random arrival time but very frequent to saturate all available resources. The scheduler serves as a \textit{gatekeeper} between the workload and the resources. In HPC the job life is typically short spanning from few, seconds, minutes to hours at most.
+
+\section{Services Cluster}
+The services clusters are typically made of long running services which are supposed to be always available, like a site web server, kafka brokers, grafana, system monitors etc.
+
+\chapter{One virtual cluster}
+
+Both of the above clusters are made either of bare metal, hypervisors or containers and are capable of doing computing either way. One would like to maximize the return of investment by using the compute resources when and where they are needed. We want to have a multiple functional worlds to communicate and exchange compute power, this is what we call as \textbf{Virtual Cluster}\\
+
+The scope of this project is to be able to have hardware, virtual or bare machine to \textit{flow} between different type of clusters. The trigger that determines the machines migration could be a cpu or memory usage or any other configurable option.\\
+
+The only requirement for the scheduling systems, Slurm, OpenLava, etc. Is to be able to accept hosts dynamically. Most of the modern schedulers do satisfy this requirement as they must work in cloud where hosts come and go.
+
+\chapter{System Components}
+
+\section{Resource Broker Daemon and The Broker Server}
+The key components of the system is a central broker which we call \textbf{resbd} (Resource Broker Daemon) which implements the ability to detect load fluctuation in any of the defined clusters. The other component is called \textbf{rbserver} (Resource Server) which is a client of the broker and execute the startup or shutdown of the virtual machines or containers as instructed by the cental broker. \\
+
+The broker is scheduler agnostic it can work with any type of scheduling system being is Slurm, OpenLava, LSF or PBS. It uses the command line interface of any of these systems to monitor load and detect eventual anomalies. \\
+
+The broker takes in input on the command line a parameter which specifies which type of cluster manager it is using, for example
+
+\begin{boxed}
+\texttt{resbd ... -s slurm|openlava|lsf ....}
+\end{boxed}
+
+This tells the broker which module specific to each scheduler to load and run.
+\chapter{System Design}
+
+\section{The \textbf{resbd} the broker}
+
+The broker is a small daemon having a configuration file installed by default in \textit{/usr/local/etc} as \textit{resdb.conf}. This file defines the basic behavior of the broker.
+
+\begin{enumerate}
+    \item The daemon listening port
+    \item Several system parameters
+    \item System queues. The queues are a central concept of the broker as they define the type of workload, the mathematical formula how to add resources and the name space where the resources should be added.
+    \item The numerical parameter which tell the broker when to add hosts based on what number of pending jobs.
+\end{enumerate}
+
+\begin{verbatim}
+
+[resbd]
+ host = buntu24
+ port = 41200
+
+[params]
+ scheduler = slurm
+ work_dir = /var/local/resb
+ container_runtime = docker
+ vm_runtime = virsh
+ workload_timer = 30 # seconds
+# we support only log_err, log_info, log_debug
+ log_mask = log_debug
+
+# Code dello schedulatore
+[queue_1 vm_queue]
+ type = vm
+ name_space = dynamic
+ borrow_factor = 5,2 # every 10 jobs add 2 hosts
+
+[queue_2 container_queue]
+ type = container
+ name_space = dynamic
+ borrow_factor = 5,1 # every 5 jobs add 1 host
+\end{verbatim}
+
+
+\subsection{Requesting resources}
+A simple algorithm used by the current broker implementation computes the number of needed hosts by taking the integer part of the division between
+the pending jobs dynamically obtained by the workload manager and the $borrow\_factor[0]$, this number is then multiplied by the number of need hosts as specified in $borrow\_factor[1]$
+
+\[
+\frac{num\_pending\_jobs}{borrow\_factor[0]}\cdot borrow\_factor[1]
+\]
+
+The broker then compares the result, which represent the number of needed hosts, with hosts allocated to the broker from a given server already.
+
+\subsection{Example}
+
+Let's assume the broker configuration for a queue \textit{vm\_queue} is \(5,2\) which means every 5 jobs in the queue \textit{go and find} \(2\) machines, from vm, container or cloud. The broker resource module performs a simple division of the jobs in the queue with the \(borrow\_limit[0]\) like
+
+\[
+\frac{1}{5},\frac{2}{5},..., \frac{5}{5}
+\]
+
+When it reaches the number of \(5\) pending jobs, it requests \(2\) machines, vm, containers or cloud from the resource broker.
+
+As the number of pending job increases and so the number of hosts requested by the broker from the various servers the broker must compute the difference between the hosts allocated and those still needed.
+
+\subsection{Releasing resources}
+
+When the broker detect the number of jobs is dropping in the any of its working queues it performs the reverse the same mathematical operation as above releasing the number of nodes and sending shutdown messages to the
+server.
+
+\subsection{Example}
+
+.....
+
+\section{The \textbf{rbserver} server}
+
+The server is a small daemon which registers with the master and waits for instructions. Should the broker decide more resources are necessary to the HPC cluster in any of its queues, it calls the server to start a vm, container or cloud  machines which will join dynamically the compute cluster.
+
+\chapter{Protocols between daemons}
+\noindent
+
+This picture on the next page shows the basic protocol between the daemon and the server
+
+\begin{figure}[h]
+  \centering
+  %\includegraphics[width=1.5\linewidth]{protocols.drawio.pdf}
+  \includegraphics[width=1.5\linewidth,height=20.cm]{protocols.drawio.pdf}
+    \caption{Protocol interaction between broker and server}
+    \label{fig:enter-label}
+\end{figure}
+
+\section{Broker to Server Protocol}
+The broker and the server do establish a textit{TCP/IP} connection when they start.
+A synchronization protocol works such that the broker connects to available
+servers reading their hostname/ip addresses from a give configuration file.
+There could be multiple servers for a given host registered at different ports.
+The textit{TCP/IP} connection between the broker and the server is permanent.\\
+
+The broker detects the need for computing resources by monitoring the workload
+manager queue. When it detects the need for more computing it sends a message to
+the server.\\
+
+The broker attemps to reconnect to servers that eventually did disconnect.
+
+\section{Server to Broker Protocol}
+
+The broker protocol is simple, one it does receive the request fro the broker it
+puts itself in listening waiting for instruction from the broker. Since the
+textit{TCP/IP} connection between the broker and the server is permament, should
+it go dow the broker closes its connection and waits for further instructions
+from the broker.
+
+
+\section{User Interface}
+\ldots
+\chapter{Simulator}
+
+Currently the system runs in simulation mode. This is fundamental to debug the entire protocol suite and test the different possible algorithms to get and reclaim resources. The simulator uses text file in which the number of pending jobs per queue are written and a machinefile in which the number of available nodes are written for each server.
+
+\chapter{Experience with schedulers}
+......
+
+%\begin{figure}[h]
+%\centering
+%\includegraphics[width=0.3\textwidth]{frog.jpg}
+%\caption{\label{fig:frog}This frog is Giovanni watching you.}
+%\end{figure}
+
+\end{document}
